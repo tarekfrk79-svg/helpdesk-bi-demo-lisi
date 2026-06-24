@@ -1,0 +1,136 @@
+@model OwnerDashboardDto
+@{
+    ViewData["Title"] = "Espace Owner";
+}
+
+<section class="container py-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4 mb-4">
+        <div>
+            <span class="eyebrow">Owner Space</span>
+            <h1 class="display-6 fw-bold mb-2">Pilotage de la demo</h1>
+            <p class="text-secondary mb-0">
+                Creer des entreprises demo, suivre l'usage des codes et reinitialiser les donnees sans toucher aux autres environnements.
+            </p>
+        </div>
+
+        <div class="stats-grid compact-grid">
+            <div class="metric-card">
+                <span class="metric-label">Entreprises</span>
+                <strong class="metric-value">@Model.TotalCompanies</strong>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Actives</span>
+                <strong class="metric-value">@Model.ActiveCompanies</strong>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Tickets</span>
+                <strong class="metric-value">@Model.TotalTickets</strong>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Usages code</span>
+                <strong class="metric-value">@Model.TotalAccessUsages</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card mb-4">
+        <h2 class="h4 mb-3">Creer une entreprise demo</h2>
+        <form asp-action="CreateCompany" method="post" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div class="col-lg-8">
+                <label class="form-label fw-semibold" for="companyName">Nom de l'entreprise</label>
+                <input id="companyName" name="companyName" class="form-control form-control-lg" placeholder="Exemple : Sopra Steria Demo" />
+            </div>
+            <div class="col-lg-4 d-flex align-items-end">
+                <button class="btn btn-brand btn-lg w-100" type="submit">Creer l'entreprise</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Entreprises demo</h2>
+            <span class="text-secondary small">1 code recruteur par entreprise dans ce MVP</span>
+        </div>
+
+        @if (Model.Companies.Count == 0)
+        {
+            <p class="text-secondary mb-0">Aucune entreprise demo pour le moment.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle owner-table">
+                    <thead>
+                        <tr>
+                            <th>Entreprise</th>
+                            <th>Code</th>
+                            <th>Etat</th>
+                            <th>Utilisations</th>
+                            <th>Tickets</th>
+                            <th>Dernier reset</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var company in Model.Companies)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@company.CompanyName</div>
+                                <div class="text-secondary small">@company.CompanySlug</div>
+                            </td>
+                            <td><code>@company.AccessCode</code></td>
+                            <td>
+                                <span class="status-pill @(company.IsActive ? "status-live" : "status-muted")">
+                                    @(company.IsActive ? "Active" : "Desactivee")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@company.UsageCount</div>
+                                <div class="text-secondary small">
+                                    @(company.LastUsedAtUtc.HasValue ? company.LastUsedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Jamais")
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@company.TicketCount</div>
+                                <div class="text-secondary small">@company.PersonCount personnages</div>
+                            </td>
+                            <td class="text-secondary small">
+                                @(company.LastResetAtUtc.HasValue ? company.LastResetAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "Aucun")
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap justify-content-end gap-2">
+                                    <form asp-action="ToggleCompany" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="companyId" value="@company.CompanyId" />
+                                        <input type="hidden" name="isActive" value="@(!company.IsActive)" />
+                                        <button class="btn btn-outline-dark btn-sm" type="submit">
+                                            @(company.IsActive ? "Desactiver" : "Reactiver")
+                                        </button>
+                                    </form>
+                                    <form asp-action="ResetCompany" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="companyId" value="@company.CompanyId" />
+                                        <button class="btn btn-outline-dark btn-sm" type="submit">Reset tickets</button>
+                                    </form>
+                                    <form asp-controller="Export" asp-action="OwnerCompanyCsv" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="companyId" value="@company.CompanyId" />
+                                        <button class="btn btn-outline-dark btn-sm" type="submit">Export CSV</button>
+                                    </form>
+                                    <form asp-action="DeleteCompany" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="companyId" value="@company.CompanyId" />
+                                        <button class="btn btn-outline-danger btn-sm" type="submit">Supprimer</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

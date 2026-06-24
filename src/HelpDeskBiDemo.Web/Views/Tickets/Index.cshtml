@@ -1,0 +1,224 @@
+@model HelpDeskBiDemo.Application.Common.Tickets.TicketBoardDto
+@{
+    ViewData["Title"] = "Tickets";
+    var createModel = ViewBag.CreateModel as HelpDeskBiDemo.Web.ViewModels.TicketCreateInputViewModel
+        ?? new HelpDeskBiDemo.Web.ViewModels.TicketCreateInputViewModel();
+}
+
+<section class="container py-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4 mb-4">
+        <div>
+            <span class="eyebrow">@Model.CompanyName</span>
+            <h1 class="display-6 fw-bold mb-2">Tickets - @Model.ActiveRoleLabel</h1>
+            <p class="text-secondary mb-0">
+                @if (!string.IsNullOrWhiteSpace(Model.ActivePersonDisplayName))
+                {
+                    <span>Connecte en tant que @Model.ActivePersonDisplayName. </span>
+                }
+                Recherche, filtres et acces detail des tickets.
+            </p>
+        </div>
+
+        <a class="btn btn-outline-dark" asp-controller="Demo" asp-action="Dashboard">Retour dashboard</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="info-card mb-4">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-lg-4">
+                        <label class="form-label fw-semibold" for="searchTerm">Recherche</label>
+                        <input id="searchTerm" name="searchTerm" value="@Model.SearchTerm" class="form-control" placeholder="Titre ou description" />
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label fw-semibold" for="statusFilter">Statut</label>
+                        <select id="statusFilter" name="statusFilter" class="form-select">
+                            <option value="">Tous</option>
+                            @foreach (var status in Enum.GetValues<TicketStatus>())
+                            {
+                                <option value="@status" selected="@(Model.StatusFilter == status)">@status.ToDisplayLabel()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label fw-semibold" for="priorityFilter">Priorite</label>
+                        <select id="priorityFilter" name="priorityFilter" class="form-select">
+                            <option value="">Toutes</option>
+                            @foreach (var priority in Enum.GetValues<TicketPriority>())
+                            {
+                                <option value="@priority" selected="@(Model.PriorityFilter == priority)">@priority.ToDisplayLabel()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label fw-semibold" for="categoryFilter">Categorie</label>
+                        <select id="categoryFilter" name="categoryFilter" class="form-select">
+                            <option value="">Toutes</option>
+                            @foreach (var category in Enum.GetValues<TicketCategory>())
+                            {
+                                <option value="@category" selected="@(Model.CategoryFilter == category)">@category.ToDisplayLabel()</option>
+                            }
+                        </select>
+                    </div>
+                    @if (Model.ActiveRole == DemoRole.CompanyAdmin || Model.ActiveRole == DemoRole.SupportTechnician)
+                    {
+                        <div class="col-lg-2">
+                            <label class="form-label fw-semibold" for="assignedTechnicianIdFilter">Technicien</label>
+                            <select id="assignedTechnicianIdFilter" name="assignedTechnicianIdFilter" class="form-select">
+                                <option value="">Tous</option>
+                                @foreach (var technician in Model.TechnicianOptions)
+                                {
+                                    <option value="@technician.Id" selected="@(Model.AssignedTechnicianIdFilter == technician.Id)">@technician.FullName</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                    <div class="col-lg-2">
+                        <label class="form-label fw-semibold" for="createdFromDate">Du</label>
+                        <input id="createdFromDate" name="createdFromDate" type="date" value="@(Model.CreatedFromDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                    </div>
+                    <div class="col-lg-2">
+                        <label class="form-label fw-semibold" for="createdToDate">Au</label>
+                        <input id="createdToDate" name="createdToDate" type="date" value="@(Model.CreatedToDate?.ToString("yyyy-MM-dd"))" class="form-control" />
+                    </div>
+                    @if (Model.ActiveRole == DemoRole.SupportTechnician)
+                    {
+                        <div class="col-lg-2">
+                            <div class="form-check pt-lg-4 pb-2">
+                                <input id="onlyMine" name="onlyMine" class="form-check-input" type="checkbox" value="true" checked="@Model.OnlyMine" />
+                                <label class="form-check-label" for="onlyMine">Mes tickets</label>
+                            </div>
+                        </div>
+                    }
+                    <div class="col-lg-2">
+                        <button class="btn btn-brand w-100" type="submit">Filtrer</button>
+                    </div>
+                    <div class="col-lg-2">
+                        <a class="btn btn-outline-dark w-100" asp-action="Index">Reinitialiser</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="info-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Liste des tickets</h2>
+                    <span class="text-secondary small">@Model.Tickets.Count ticket(s)</span>
+                </div>
+
+                @if (Model.Tickets.Count == 0)
+                {
+                    <p class="text-secondary mb-0">Aucun ticket ne correspond a la selection.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle owner-table">
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>SLA</th>
+                                    <th>Statut</th>
+                                    <th>Priorite</th>
+                                    <th>Demandeur</th>
+                                    <th>Technicien</th>
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var ticket in Model.Tickets)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold">@ticket.Title</div>
+                                        <div class="text-secondary small">@ticket.Category.ToDisplayLabel()</div>
+                                        <div class="text-secondary small">Echeance : @ticket.DueAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                        @if (ticket.TechnicianResolutionHours.HasValue)
+                                        {
+                                            <div class="text-secondary small">Temps technicien : @ticket.TechnicianResolutionHours.FormatHours()</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="sla-pill @ticket.IsOverdue.ToSlaCssClass()">
+                                            @(ticket.IsOverdue ? "En retard" : "Dans les temps")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-pill @ticket.Status.ToStatusCssClass()">@ticket.Status.ToDisplayLabel()</span>
+                                    </td>
+                                    <td>
+                                        <span class="priority-pill @ticket.Priority.ToPriorityCssClass()">@ticket.Priority.ToDisplayLabel()</span>
+                                    </td>
+                                    <td>@ticket.RequesterName</td>
+                                    <td>@(ticket.AssignedTechnicianName ?? "Non assigne")</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-outline-dark btn-sm" asp-action="Details" asp-route-id="@ticket.TicketId">Voir</a>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="info-card">
+                @if (Model.CanCreateTicket)
+                {
+                    <h2 class="h4 mb-3">Creer un ticket</h2>
+                    <form asp-action="Create" method="post" class="d-flex flex-column gap-3">
+                        @Html.AntiForgeryToken()
+                        <div>
+                            <label class="form-label fw-semibold" for="Title">Titre</label>
+                            <input id="Title" name="Title" value="@createModel.Title" class="form-control" />
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold" for="Category">Categorie</label>
+                            <select id="Category" name="Category" class="form-select">
+                                @foreach (var category in Enum.GetValues<TicketCategory>())
+                                {
+                                    <option value="@category" selected="@(createModel.Category == category)">@category.ToDisplayLabel()</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold" for="Priority">Priorite</label>
+                            <select id="Priority" name="Priority" class="form-select">
+                                @foreach (var priority in Enum.GetValues<TicketPriority>())
+                                {
+                                    <option value="@priority" selected="@(createModel.Priority == priority)">@priority.ToDisplayLabel()</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold" for="Description">Description</label>
+                            <textarea id="Description" name="Description" rows="6" class="form-control">@createModel.Description</textarea>
+                        </div>
+                        <button class="btn btn-brand" type="submit">Envoyer le ticket</button>
+                    </form>
+                }
+                else
+                {
+                    @if (Model.ActiveRole == DemoRole.SupportTechnician)
+                    {
+                        <h2 class="h4 mb-3">Parcours technicien</h2>
+                        <div class="helper-panel">
+                            <p class="mb-2">Tu vois ici les tickets non assignes et ceux deja sur ton profil.</p>
+                            <p class="text-secondary mb-0">
+                                Ouvre un ticket <strong>Nouveau</strong>, clique <strong>Prendre en charge</strong>, ajoute un commentaire, puis passe-le en <strong>Resolu</strong> quand le test est termine. Tu peux aussi filtrer par priorite, categorie, technicien et date.
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <h2 class="h4 mb-3">Vue role</h2>
+                        <p class="text-secondary mb-0">
+                            En mode @Model.ActiveRoleLabel.ToLowerInvariant(), tu peux filtrer les tickets puis ouvrir leur detail pour commenter ou les mettre a jour selon le role.
+                        </p>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>

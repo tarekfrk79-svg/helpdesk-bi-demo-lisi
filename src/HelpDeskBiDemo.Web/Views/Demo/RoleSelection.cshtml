@@ -1,0 +1,44 @@
+@model HelpDeskBiDemo.Web.ViewModels.RoleSelectionViewModel
+@{
+    ViewData["Title"] = "Choix du role";
+}
+
+<section class="container py-5">
+    <div class="hero-panel">
+        <span class="eyebrow">Entreprise active</span>
+        <h1 class="display-6 fw-bold mb-2">@Model.CompanyName</h1>
+        <p class="text-secondary mb-4">
+            Choisis une vue de demonstration pour explorer l'application comme un administrateur, un technicien support ou un utilisateur interne.
+        </p>
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <form asp-action="SelectRole" method="post" class="role-card h-100">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="role" value="@DemoRole.CompanyAdmin" />
+                    <h2 class="h4">Admin entreprise</h2>
+                    <p>Vue globale des tickets, statistiques et pilotage metier de la demo.</p>
+                    <button class="btn btn-brand mt-auto" type="submit">Entrer en Admin</button>
+                </form>
+            </div>
+            <div class="col-lg-4">
+                <form asp-action="SelectRole" method="post" class="role-card h-100">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="role" value="@DemoRole.SupportTechnician" />
+                    <h2 class="h4">Technicien support</h2>
+                    <p>Choix entre deux techniciens demo pour prendre en charge les tickets.</p>
+                    <button class="btn btn-brand mt-auto" type="submit">Choisir un technicien</button>
+                </form>
+            </div>
+            <div class="col-lg-4">
+                <form asp-action="SelectRole" method="post" class="role-card h-100">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="role" value="@DemoRole.EndUser" />
+                    <h2 class="h4">Utilisateur / Client interne</h2>
+                    <p>Choix entre cinq personnages demo pour simuler les demandes utilisateurs.</p>
+                    <button class="btn btn-brand mt-auto" type="submit">Choisir un utilisateur</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>

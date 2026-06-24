@@ -1,0 +1,4 @@
+ConnectionStrings__DefaultConnection=Server=tcp:<sql-server-name>.database.windows.net,1433;Initial Catalog=<database-name>;Persist Security Info=False;User ID=<sql-admin-user>;Password=<sql-admin-password>;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
+Owner__AccessCode=OWNER-DEMO-2026
+Demo__SeedData=true
+ASPNETCORE_ENVIRONMENT=Production

@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)obj\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)obj\</MSBuildProjectExtensionsPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HelpDeskBiDemo.Application\HelpDeskBiDemo.Application.csproj" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\..\src\HelpDeskBiDemo.Domain\HelpDeskBiDemo.Domain.csproj" SkipGetTargetFrameworkProperties="true" />
+    <ProjectReference Include="..\..\src\HelpDeskBiDemo.Infrastructure\HelpDeskBiDemo.Infrastructure.csproj" SkipGetTargetFrameworkProperties="true" />
+  </ItemGroup>
+</Project>

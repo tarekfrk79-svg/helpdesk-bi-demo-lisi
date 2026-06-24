@@ -1,0 +1,232 @@
+@model HelpDeskBiDemo.Application.Common.Tickets.TicketDetailDto
+@{
+    ViewData["Title"] = "Detail du ticket";
+    var availableStatuses = Model.ActiveRole == DemoRole.SupportTechnician
+        ? new[] { TicketStatus.InProgress, TicketStatus.Resolved, TicketStatus.Closed }
+        : Enum.GetValues<TicketStatus>();
+    var showTakeOwnershipShortcut = Model.ActiveRole == DemoRole.SupportTechnician &&
+                                    Model.CanSelfAssign &&
+                                    Model.Status != TicketStatus.Resolved &&
+                                    Model.Status != TicketStatus.Closed;
+    var slaLabel = Model.IsOverdue ? "En retard" : "Dans les temps";
+}
+
+<section class="container py-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4 mb-4">
+        <div>
+            <span class="eyebrow">@Model.CompanyName</span>
+            <h1 class="display-6 fw-bold mb-2">@Model.Title</h1>
+            <p class="text-secondary mb-0">
+                @Model.Category.ToDisplayLabel() | @Model.Priority.ToDisplayLabel() |
+                <span class="status-pill @Model.Status.ToStatusCssClass()">@Model.Status.ToDisplayLabel()</span>
+                <span class="sla-pill @Model.IsOverdue.ToSlaCssClass() ms-2">@slaLabel</span>
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-dark" asp-action="Index">Retour liste</a>
+            <a class="btn btn-outline-dark" asp-controller="Demo" asp-action="Dashboard">Dashboard</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="info-card mb-4">
+                <h2 class="h4 mb-3">Description</h2>
+                <p class="mb-4">@Model.Description</p>
+
+                <div class="detail-grid">
+                    <div>
+                        <span class="detail-label">Demandeur</span>
+                        <div class="fw-semibold">@Model.RequesterName</div>
+                    </div>
+                    <div>
+                        <span class="detail-label">Technicien</span>
+                        <div class="fw-semibold">@(Model.AssignedTechnicianName ?? "Non assigne")</div>
+                    </div>
+                    <div>
+                        <span class="detail-label">Cree le</span>
+                        <div class="fw-semibold">@Model.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    <div>
+                        <span class="detail-label">Mis a jour</span>
+                        <div class="fw-semibold">@Model.UpdatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    @if (Model.AssignedAtUtc.HasValue)
+                    {
+                        <div>
+                            <span class="detail-label">Assigne le</span>
+                            <div class="fw-semibold">@Model.AssignedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    }
+                    @if (Model.ResolvedAtUtc.HasValue)
+                    {
+                        <div>
+                            <span class="detail-label">Resolu le</span>
+                            <div class="fw-semibold">@Model.ResolvedAtUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h2 class="h4 mb-3">Commentaires</h2>
+
+                @if (Model.Comments.Count == 0)
+                {
+                    <p class="text-secondary">Aucun commentaire pour le moment.</p>
+                }
+                else
+                {
+                    <div class="comment-list mb-4">
+                        @foreach (var comment in Model.Comments)
+                        {
+                            <article class="comment-card">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <strong>@comment.AuthorDisplayName</strong>
+                                    <span class="text-secondary small">@comment.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                <p class="mb-0">@comment.Content</p>
+                            </article>
+                        }
+                    </div>
+                }
+
+                @if (Model.CanComment)
+                {
+                    <form asp-action="AddComment" method="post" class="d-flex flex-column gap-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.TicketId" />
+                        <div>
+                            <label class="form-label fw-semibold" for="content">Ajouter un commentaire</label>
+                            <textarea id="content" name="content" rows="4" class="form-control" placeholder="Ecrire une reponse ou un suivi"></textarea>
+                        </div>
+                        <button class="btn btn-brand align-self-start" type="submit">Publier</button>
+                    </form>
+                }
+            </div>
+
+            <div class="info-card mt-4">
+                <h2 class="h4 mb-3">Historique du ticket</h2>
+
+                @if (Model.Activities.Count == 0)
+                {
+                    <p class="text-secondary mb-0">Aucun evenement trace pour le moment.</p>
+                }
+                else
+                {
+                    <div class="activity-timeline">
+                        @foreach (var activity in Model.Activities)
+                        {
+                            <article class="activity-item">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <div>
+                                        <span class="activity-pill @activity.ActivityType.ToActivityCssClass()">@activity.ActivityType.ToDisplayLabel()</span>
+                                        <div class="fw-semibold mt-2">@activity.Description</div>
+                                        @if (!string.IsNullOrWhiteSpace(activity.ActorDisplayName))
+                                        {
+                                            <div class="text-secondary small">@activity.ActorDisplayName</div>
+                                        }
+                                    </div>
+                                    <span class="text-secondary small">@activity.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="info-card mb-4">
+                <h2 class="h4 mb-3">SLA et traitement</h2>
+                <div class="detail-grid">
+                    <div>
+                        <span class="detail-label">Objectif SLA</span>
+                        <div class="fw-semibold">@Model.SlaTargetHours h</div>
+                    </div>
+                    <div>
+                        <span class="detail-label">Echeance</span>
+                        <div class="fw-semibold">@Model.DueAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    <div>
+                        <span class="detail-label">Etat SLA</span>
+                        <div><span class="sla-pill @Model.IsOverdue.ToSlaCssClass()">@slaLabel</span></div>
+                    </div>
+                    <div>
+                        <span class="detail-label">Temps technicien</span>
+                        <div class="fw-semibold">
+                            @(Model.TechnicianResolutionHours.HasValue
+                                ? Model.TechnicianResolutionHours.FormatHours()
+                                : Model.TechnicianActiveHours.FormatHours())
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h2 class="h4 mb-3">Gestion du ticket</h2>
+
+                @if (showTakeOwnershipShortcut)
+                {
+                    <div class="helper-panel mb-4">
+                        <p class="fw-semibold mb-2">Ticket disponible</p>
+                        <p class="text-secondary mb-3">
+                            Clique ci-dessous pour te l'assigner automatiquement et le faire passer en cours.
+                        </p>
+                        <form asp-action="Update" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.TicketId" />
+                            <input type="hidden" name="status" value="@TicketStatus.InProgress" />
+                            <button class="btn btn-brand w-100" type="submit">Prendre en charge</button>
+                        </form>
+                    </div>
+                }
+
+                @if (Model.CanManageTicket)
+                {
+                    <form asp-action="Update" method="post" class="d-flex flex-column gap-3">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.TicketId" />
+                        <div>
+                            <label class="form-label fw-semibold" for="status">Statut</label>
+                            <select id="status" name="status" class="form-select">
+                                @foreach (var status in availableStatuses)
+                                {
+                                    <option value="@status" selected="@(Model.Status == status)">@status.ToDisplayLabel()</option>
+                                }
+                            </select>
+                        </div>
+                        @if (Model.ActiveRole == DemoRole.CompanyAdmin)
+                        {
+                            <div>
+                                <label class="form-label fw-semibold" for="assignedTechnicianId">Technicien assigne</label>
+                                <select id="assignedTechnicianId" name="assignedTechnicianId" class="form-select">
+                                    <option value="">Non assigne</option>
+                                    @foreach (var technician in Model.TechnicianOptions)
+                                    {
+                                        <option value="@technician.Id" selected="@(Model.AssignedTechnicianId == technician.Id)">@technician.FullName</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-secondary small mb-0">
+                                En mode technicien, toute mise a jour garde le ticket sur ton profil.
+                            </p>
+                        }
+                        <button class="btn btn-brand" type="submit">Mettre a jour le ticket</button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-secondary mb-0">
+                        @(Model.ActiveRole == DemoRole.EndUser
+                            ? "En mode utilisateur, cette zone reste en lecture seule. Tu peux suivre le ticket et commenter."
+                            : "Ce ticket est deja reserve a un autre technicien. Tu peux le consulter, mais pas le modifier.")
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</section>

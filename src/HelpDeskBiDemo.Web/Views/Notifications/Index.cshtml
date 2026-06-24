@@ -1,0 +1,117 @@
+@model HelpDeskBiDemo.Application.Common.Notifications.NotificationCenterDto
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<section class="container py-5">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-4 mb-4">
+        <div>
+            <span class="eyebrow">Centre de notifications</span>
+            <h1 class="display-6 fw-bold mb-2">@Model.AudienceTitle</h1>
+            <p class="text-secondary mb-0">@Model.AudienceDescription</p>
+        </div>
+
+        <div class="stats-grid compact-grid">
+            <div class="metric-card">
+                <span class="metric-label">Non lues</span>
+                <strong class="metric-value">@Model.UnreadCount</strong>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Alertes live</span>
+                <strong class="metric-value">@Model.LiveAlertCount</strong>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.UnreadCount > 0)
+    {
+        <div class="d-flex justify-content-end mb-4">
+            <form asp-action="MarkAllRead" method="post">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-dark" type="submit">Tout marquer comme lu</button>
+            </form>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="info-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Notifications recentes</h2>
+                    <span class="text-secondary small">Notifications persistantes liees aux actions tickets.</span>
+                </div>
+
+                @if (Model.Notifications.Count == 0)
+                {
+                    <p class="text-secondary mb-0">Aucune notification persistante pour le moment.</p>
+                }
+                else
+                {
+                    <div class="notification-list">
+                        @foreach (var notification in Model.Notifications)
+                        {
+                            var actionUrl = notification.ActionUrl;
+                            if (notification.NotificationId.HasValue && !string.IsNullOrWhiteSpace(actionUrl))
+                            {
+                                actionUrl = $"{actionUrl}?notificationId={notification.NotificationId.Value}";
+                            }
+
+                            <article class="notification-card @(notification.IsRead ? "notification-read" : "notification-unread")">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <div>
+                                        <span class="notification-pill @notification.NotificationType.ToNotificationCssClass()">@notification.NotificationType.ToDisplayLabel()</span>
+                                        @if (!notification.IsRead)
+                                        {
+                                            <span class="notification-dot ms-2">Nouveau</span>
+                                        }
+                                    </div>
+                                    <span class="text-secondary small">@notification.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                <h3 class="h5 mb-2">@notification.Title</h3>
+                                <p class="text-secondary mb-3">@notification.Message</p>
+                                @if (!string.IsNullOrWhiteSpace(actionUrl))
+                                {
+                                    <a class="btn btn-outline-dark btn-sm" href="@actionUrl">Ouvrir le ticket</a>
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="info-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Alertes en direct</h2>
+                    <span class="text-secondary small">Calculees selon ton role et l'etat actuel des tickets.</span>
+                </div>
+
+                @if (Model.LiveAlerts.Count == 0)
+                {
+                    <p class="text-secondary mb-0">Aucune alerte particuliere pour le moment.</p>
+                }
+                else
+                {
+                    <div class="notification-list">
+                        @foreach (var alert in Model.LiveAlerts)
+                        {
+                            <article class="notification-card notification-alert-card">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <span class="notification-pill @alert.NotificationType.ToNotificationCssClass()">@alert.NotificationType.ToDisplayLabel()</span>
+                                    <span class="text-secondary small">@alert.CreatedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                                <h3 class="h5 mb-2">@alert.Title</h3>
+                                <p class="text-secondary mb-3">@alert.Message</p>
+                                @if (!string.IsNullOrWhiteSpace(alert.ActionUrl))
+                                {
+                                    <a class="btn btn-outline-dark btn-sm" href="@alert.ActionUrl">Voir le ticket</a>
+                                }
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>

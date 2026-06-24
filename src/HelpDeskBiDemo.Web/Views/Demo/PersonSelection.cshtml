@@ -1,0 +1,31 @@
+@model HelpDeskBiDemo.Web.ViewModels.PersonSelectionViewModel
+@{
+    ViewData["Title"] = "Choix du personnage";
+}
+
+<section class="container py-5">
+    <div class="hero-panel">
+        <span class="eyebrow">@Model.CompanyName</span>
+        <h1 class="display-6 fw-bold mb-2">@Model.RoleLabel</h1>
+        <p class="text-secondary mb-4">
+            Choisis le personnage demo a utiliser pour cette visite recruteur.
+        </p>
+
+        <div class="row g-3">
+            @foreach (var person in Model.People)
+            {
+                <div class="col-lg-4">
+                    <form asp-action="SelectPerson" method="post" class="role-card h-100">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="role" value="@Model.Role" />
+                        <input type="hidden" name="personId" value="@person.Id" />
+                        <h2 class="h4">@person.FullName</h2>
+                        <p class="mb-2 fw-semibold">@person.JobTitle</p>
+                        <p class="text-secondary">@person.Department</p>
+                        <button class="btn btn-brand mt-auto" type="submit">Utiliser ce profil</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+</section>

@@ -1,0 +1,287 @@
+@model DemoDashboardDto
+@{
+    ViewData["Title"] = "Dashboard demo";
+}
+
+<section class="container py-5">
+    <div class="dashboard-heading-row mb-4">
+        <div>
+            <span class="eyebrow">@Model.CompanyName</span>
+            <h1 class="display-6 fw-bold mb-2">@Model.ActiveRoleLabel</h1>
+            <p class="text-secondary mb-0">
+                @if (!string.IsNullOrWhiteSpace(Model.ActivePersonDisplayName))
+                {
+                    <span>Connecte en tant que @Model.ActivePersonDisplayName.</span>
+                }
+                Cette vue montre deja les indicateurs clefs de la demo.
+            </p>
+        </div>
+
+        <div class="dashboard-actions">
+            @if (Model.ActiveRole == DemoRole.CompanyAdmin)
+            {
+                <a class="btn btn-brand" asp-controller="Export" asp-action="CompanyCsv">Exporter en CSV pour Tableau</a>
+            }
+        </div>
+    </div>
+
+    <div class="stats-grid dashboard-stats-grid mb-4">
+        <div class="metric-card">
+            <span class="metric-label">Tickets</span>
+            <strong class="metric-value">@Model.TotalTickets</strong>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Nouveaux</span>
+            <strong class="metric-value">@Model.OpenTickets</strong>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">En cours</span>
+            <strong class="metric-value">@Model.InProgressTickets</strong>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Resolus</span>
+            <strong class="metric-value">@Model.ResolvedTickets</strong>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Delai moyen</span>
+            <strong class="metric-value">@Model.AverageResolutionHours h</strong>
+        </div>
+    </div>
+
+    @if (Model.ActiveRole == DemoRole.CompanyAdmin)
+    {
+        <div class="stats-grid dashboard-stats-grid mb-4">
+            <div class="metric-card metric-card-accent">
+                <span class="metric-label">Tickets en retard</span>
+                <strong class="metric-value">@Model.OverdueTickets</strong>
+            </div>
+            <div class="metric-card metric-card-accent">
+                <span class="metric-label">Non assignes</span>
+                <strong class="metric-value">@Model.UnassignedTickets</strong>
+            </div>
+            <div class="metric-card metric-card-accent">
+                <span class="metric-label">Taux de resolution</span>
+                <strong class="metric-value">@Model.ResolutionRatePercent %</strong>
+            </div>
+            <div class="metric-card metric-card-accent">
+                <span class="metric-label">Temps moyen tech</span>
+                <strong class="metric-value">@Model.AverageTechnicianResolutionHours h</strong>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="info-card h-100">
+                <h2 class="h4 mb-3">Tickets par categorie</h2>
+                @if (Model.TicketsByCategory.Count == 0)
+                {
+                    <p class="text-secondary mb-0">Aucune donnee pour le moment.</p>
+                }
+                else
+                {
+                    <div class="stack-list">
+                        @foreach (var item in Model.TicketsByCategory)
+                        {
+                            <div class="stack-row">
+                                <span>@item.Label</span>
+                                <strong>@item.Count</strong>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="info-card h-100">
+                <h2 class="h4 mb-3">Tickets par priorite</h2>
+                @if (Model.TicketsByPriority.Count == 0)
+                {
+                    <p class="text-secondary mb-0">Aucune donnee pour le moment.</p>
+                }
+                else
+                {
+                    <div class="stack-list">
+                        @foreach (var item in Model.TicketsByPriority)
+                        {
+                            <div class="stack-row">
+                                <span>@item.Label</span>
+                                <strong>@item.Count</strong>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.ActiveRole == DemoRole.CompanyAdmin)
+    {
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="info-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Tickets en retard</h2>
+                        <span class="sla-pill sla-overdue">@Model.OverdueTickets alerte(s)</span>
+                    </div>
+
+                    @if (Model.OverdueTicketAlerts.Count == 0)
+                    {
+                        <p class="text-secondary mb-0">Aucun ticket en retard pour le moment.</p>
+                    }
+                    else
+                    {
+                        <div class="stack-list">
+                            @foreach (var ticket in Model.OverdueTicketAlerts)
+                            {
+                                <div class="stack-row gap-3 align-items-start">
+                                    <div>
+                                        <a class="fw-semibold text-decoration-none" asp-controller="Tickets" asp-action="Details" asp-route-id="@ticket.TicketId">@ticket.Title</a>
+                                        <div class="text-secondary small">@ticket.RequesterName</div>
+                                        <div class="text-secondary small">Echeance : @ticket.DueAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="priority-pill @ticket.Priority.ToPriorityCssClass()">@ticket.Priority.ToDisplayLabel()</span>
+                                        <div class="text-secondary small mt-2">@(ticket.AssignedTechnicianName ?? "Non assigne")</div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="info-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 mb-0">Tickets non assignes</h2>
+                        <span class="sla-pill sla-on-track">@Model.UnassignedTickets ticket(s)</span>
+                    </div>
+
+                    @if (Model.UnassignedTicketAlerts.Count == 0)
+                    {
+                        <p class="text-secondary mb-0">Tous les tickets ouverts ont deja un technicien.</p>
+                    }
+                    else
+                    {
+                        <div class="stack-list">
+                            @foreach (var ticket in Model.UnassignedTicketAlerts)
+                            {
+                                <div class="stack-row gap-3 align-items-start">
+                                    <div>
+                                        <a class="fw-semibold text-decoration-none" asp-controller="Tickets" asp-action="Details" asp-route-id="@ticket.TicketId">@ticket.Title</a>
+                                        <div class="text-secondary small">@ticket.RequesterName</div>
+                                        <div class="text-secondary small">Echeance : @ticket.DueAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="priority-pill @ticket.Priority.ToPriorityCssClass()">@ticket.Priority.ToDisplayLabel()</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="info-card mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 mb-0">Charge par technicien</h2>
+                <span class="text-secondary small">Charge active, tickets en retard et temps moyen de resolution apres affectation.</span>
+            </div>
+
+            @if (Model.TechnicianWorkloads.Count == 0)
+            {
+                <p class="text-secondary mb-0">Aucun technicien actif pour cette entreprise.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle owner-table">
+                        <thead>
+                            <tr>
+                                <th>Technicien</th>
+                                <th>Actifs</th>
+                                <th>En cours</th>
+                                <th>Retard</th>
+                                <th>Resolus</th>
+                                <th>Temps moyen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var technician in Model.TechnicianWorkloads)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@technician.TechnicianName</td>
+                                <td>@technician.ActiveTickets</td>
+                                <td>@technician.InProgressTickets</td>
+                                <td>@technician.OverdueTickets</td>
+                                <td>@technician.ResolvedTickets</td>
+                                <td>@technician.AverageResolutionHours.FormatHours()</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="info-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Tickets recents</h2>
+            <span class="text-secondary small">Le MVP permet deja de creer, suivre, historiser et mesurer les tickets selon le role actif.</span>
+        </div>
+
+        @if (Model.RecentTickets.Count == 0)
+        {
+            <p class="text-secondary mb-0">Aucun ticket a afficher.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle owner-table">
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>SLA</th>
+                            <th>Statut</th>
+                            <th>Priorite</th>
+                            <th>Demandeur</th>
+                            <th>Technicien</th>
+                            <th>Temps tech</th>
+                            <th>Commentaires</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var ticket in Model.RecentTickets)
+                    {
+                        <tr>
+                            <td>
+                                <a class="fw-semibold text-decoration-none" asp-controller="Tickets" asp-action="Details" asp-route-id="@ticket.Id">@ticket.Title</a>
+                                <div class="text-secondary small">@ticket.Category.ToDisplayLabel()</div>
+                                <div class="text-secondary small">Echeance : @ticket.DueAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </td>
+                            <td>
+                                <span class="sla-pill @ticket.IsOverdue.ToSlaCssClass()">
+                                    @(ticket.IsOverdue ? "En retard" : "Dans les temps")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-pill @ticket.Status.ToStatusCssClass()">@ticket.Status.ToDisplayLabel()</span>
+                            </td>
+                            <td>
+                                <span class="priority-pill @ticket.Priority.ToPriorityCssClass()">@ticket.Priority.ToDisplayLabel()</span>
+                            </td>
+                            <td>@ticket.RequesterName</td>
+                            <td>@(ticket.AssignedTechnicianName ?? "Non assigne")</td>
+                            <td>@ticket.TechnicianResolutionHours.FormatHours()</td>
+                            <td>@ticket.CommentCount</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>
