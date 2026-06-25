@@ -1,6 +1,6 @@
 @model HelpDeskBiDemo.Application.Common.Tickets.TicketDetailDto
 @{
-    ViewData["Title"] = "Detail du ticket";
+    ViewData["Title"] = "Ticket";
     var availableStatuses = Model.ActiveRole == DemoRole.SupportTechnician
         ? new[] { TicketStatus.InProgress, TicketStatus.Resolved, TicketStatus.Closed }
         : Enum.GetValues<TicketStatus>();
