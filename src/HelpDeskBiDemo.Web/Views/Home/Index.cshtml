@@ -8,7 +8,6 @@
         <div class="row g-4 align-items-stretch">
             <div class="col-lg-7">
                 <div class="hero-panel h-100">
-                    <span class="eyebrow">Recruiter-ready ASP.NET Core demo</span>
                     <h1 class="display-5 fw-bold mb-3">HelpDesk BI Demo</h1>
                     <p class="lead mb-4">
                         Une application de support utilisateurs en C# / ASP.NET Core / .NET 8
@@ -53,10 +52,6 @@
             <div class="col-lg-5">
                 <div class="access-panel h-100">
                     <h2 class="h3 mb-3">Entrer dans la demo</h2>
-                    <p class="text-secondary mb-4">
-                        Un seul champ accepte soit ton code Owner, soit le code entreprise partage a un recruteur.
-                    </p>
-
                     <form asp-action="EnterCode" method="post">
                         @Html.AntiForgeryToken()
                         <label class="form-label fw-semibold" for="access-code">Code d'acces</label>
@@ -71,6 +66,18 @@
                             Entrer
                         </button>
                     </form>
+
+                    <hr class="my-4" />
+
+                    <div class="small text-secondary">
+                        <p class="mb-2">Le MVP final prevoit :</p>
+                        <ul class="mb-0 ps-3">
+                            <li>un espace Owner avec creation d'entreprises demo ;</li>
+                            <li>des codes entreprise envoyables aux recruteurs ;</li>
+                            <li>des vues Admin, Technicien et Utilisateur sans mot de passe ;</li>
+                            <li>un export CSV pour Tableau Software.</li>
+                        </ul>
+                    </div>
 
                 </div>
             </div>
