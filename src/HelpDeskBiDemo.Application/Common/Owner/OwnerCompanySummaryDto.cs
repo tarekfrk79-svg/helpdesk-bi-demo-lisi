@@ -11,4 +11,5 @@ public sealed record OwnerCompanySummaryDto(
     int TicketCount,
     int PersonCount,
     DateTime CreatedAtUtc,
-    DateTime? LastResetAtUtc);
+    DateTime? LastResetAtUtc,
+    IReadOnlyList<OwnerPersonAccessSummaryDto> DemoAccounts);

@@ -67,6 +67,31 @@ internal sealed class DemoCompanyService : IDemoCompanyService
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task MarkPersonLastAccessAsync(
+        int companyId,
+        int personId,
+        DemoRole role,
+        CancellationToken cancellationToken = default)
+    {
+        var person = await _dbContext.DemoPeople
+            .FirstOrDefaultAsync(
+                x => x.CompanyId == companyId &&
+                     x.Id == personId &&
+                     x.Role == role &&
+                     x.IsActive,
+                cancellationToken);
+
+        if (person is null)
+        {
+            return;
+        }
+
+        person.LastSignedInAtUtc = DateTime.UtcNow;
+        person.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<DemoDashboardDto?> GetDashboardAsync(
         int companyId,
         DemoRole role,

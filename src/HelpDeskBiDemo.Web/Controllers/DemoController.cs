@@ -61,6 +61,12 @@ public sealed class DemoController : Controller
                 return RedirectToAction(nameof(RoleSelection));
             }
 
+            await _demoCompanyService.MarkPersonLastAccessAsync(
+                companyId.Value,
+                admin.Id,
+                role,
+                cancellationToken);
+
             HttpContext.Session.SetRoleContext(role, admin.Id, admin.DisplayLabel);
             return RedirectToAction(nameof(Dashboard));
         }
@@ -115,6 +121,12 @@ public sealed class DemoController : Controller
             TempData["FlashMessage"] = "Personnage demo introuvable.";
             return RedirectToAction(nameof(PersonSelection), new { role });
         }
+
+        await _demoCompanyService.MarkPersonLastAccessAsync(
+            companyId.Value,
+            person.Id,
+            role,
+            cancellationToken);
 
         HttpContext.Session.SetRoleContext(role, person.Id, person.DisplayLabel);
         return RedirectToAction(nameof(Dashboard));

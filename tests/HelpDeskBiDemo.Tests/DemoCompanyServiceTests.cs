@@ -96,6 +96,39 @@ public sealed class DemoCompanyServiceTests
         Assert.Single(dashboard.UnassignedTicketAlerts);
     }
 
+    [Fact]
+    public async Task MarkPersonLastAccessAsync_UpdatesDemoPersonTimestamp()
+    {
+        await using var dbContext = CreateDbContext();
+
+        var company = new Company
+        {
+            Name = "Contoso Support Demo",
+            Slug = Guid.NewGuid().ToString("N")
+        };
+
+        dbContext.Companies.Add(company);
+        await dbContext.SaveChangesAsync();
+
+        var technician = new DemoPerson
+        {
+            CompanyId = company.Id,
+            Role = DemoRole.SupportTechnician,
+            FullName = "Karim Benali",
+            JobTitle = "Technicien support",
+            Department = "Support"
+        };
+
+        dbContext.DemoPeople.Add(technician);
+        await dbContext.SaveChangesAsync();
+
+        var service = new DemoCompanyService(dbContext);
+        await service.MarkPersonLastAccessAsync(company.Id, technician.Id, DemoRole.SupportTechnician);
+
+        var refreshed = await dbContext.DemoPeople.SingleAsync(x => x.Id == technician.Id);
+        Assert.True(refreshed.LastSignedInAtUtc.HasValue);
+    }
+
     private static ApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()

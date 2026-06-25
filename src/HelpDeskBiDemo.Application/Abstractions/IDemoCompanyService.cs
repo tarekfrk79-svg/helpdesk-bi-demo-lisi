@@ -20,6 +20,12 @@ public interface IDemoCompanyService
         DemoRole role,
         CancellationToken cancellationToken = default);
 
+    Task MarkPersonLastAccessAsync(
+        int companyId,
+        int personId,
+        DemoRole role,
+        CancellationToken cancellationToken = default);
+
     Task<DemoDashboardDto?> GetDashboardAsync(
         int companyId,
         DemoRole role,

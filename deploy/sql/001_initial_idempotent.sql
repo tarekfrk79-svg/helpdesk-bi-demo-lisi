@@ -382,3 +382,72 @@ GO
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260624225218_AddInAppNotifications'
+)
+BEGIN
+    CREATE TABLE [Notifications] (
+        [Id] int NOT NULL IDENTITY,
+        [CompanyId] int NOT NULL,
+        [TicketId] int NOT NULL,
+        [NotificationType] int NOT NULL,
+        [RecipientRole] int NOT NULL,
+        [RecipientPersonId] int NULL,
+        [Title] nvarchar(180) NOT NULL,
+        [Message] nvarchar(700) NOT NULL,
+        [ActionUrl] nvarchar(260) NOT NULL,
+        [IsRead] bit NOT NULL,
+        [CreatedAtUtc] datetime2 NOT NULL,
+        [ReadAtUtc] datetime2 NULL,
+        CONSTRAINT [PK_Notifications] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_Notifications_Companies_CompanyId] FOREIGN KEY ([CompanyId]) REFERENCES [Companies] ([Id]),
+        CONSTRAINT [FK_Notifications_DemoPeople_RecipientPersonId] FOREIGN KEY ([RecipientPersonId]) REFERENCES [DemoPeople] ([Id]),
+        CONSTRAINT [FK_Notifications_Tickets_TicketId] FOREIGN KEY ([TicketId]) REFERENCES [Tickets] ([Id]) ON DELETE CASCADE
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260624225218_AddInAppNotifications'
+)
+BEGIN
+    CREATE INDEX [IX_Notifications_CompanyId_RecipientRole_IsRead_CreatedAtUtc] ON [Notifications] ([CompanyId], [RecipientRole], [IsRead], [CreatedAtUtc]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260624225218_AddInAppNotifications'
+)
+BEGIN
+    CREATE INDEX [IX_Notifications_RecipientPersonId_IsRead_CreatedAtUtc] ON [Notifications] ([RecipientPersonId], [IsRead], [CreatedAtUtc]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260624225218_AddInAppNotifications'
+)
+BEGIN
+    CREATE INDEX [IX_Notifications_TicketId] ON [Notifications] ([TicketId]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20260624225218_AddInAppNotifications'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20260624225218_AddInAppNotifications', N'8.0.0');
+END;
+GO
+
+COMMIT;
+GO
+

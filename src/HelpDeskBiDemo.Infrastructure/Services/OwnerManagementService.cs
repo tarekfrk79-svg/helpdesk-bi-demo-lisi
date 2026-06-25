@@ -18,25 +18,74 @@ internal sealed class OwnerManagementService : IOwnerManagementService
 
     public async Task<OwnerDashboardDto> GetDashboardAsync(CancellationToken cancellationToken = default)
     {
-        var companies = await _dbContext.Companies
+        var companyRows = await _dbContext.Companies
             .AsNoTracking()
             .OrderByDescending(company => company.CreatedAtUtc)
-            .Select(company => new OwnerCompanySummaryDto(
+            .Select(company => new
+            {
                 company.Id,
                 company.Name,
                 company.Slug,
-                company.AccessCodes
+                AccessCode = company.AccessCodes
                     .OrderByDescending(x => x.Id)
                     .Select(x => x.Code)
                     .FirstOrDefault() ?? string.Empty,
                 company.IsActive,
-                company.AccessCodes.Sum(x => x.UsageCount),
-                company.AccessCodes.Max(x => x.LastUsedAtUtc),
-                company.Tickets.Count,
-                company.People.Count,
+                UsageCount = company.AccessCodes.Sum(x => x.UsageCount),
+                LastUsedAtUtc = company.AccessCodes.Max(x => x.LastUsedAtUtc),
+                TicketCount = company.Tickets.Count,
+                PersonCount = company.People.Count,
                 company.CreatedAtUtc,
-                company.LastResetAtUtc))
+                company.LastResetAtUtc
+            })
             .ToListAsync(cancellationToken);
+
+        var companyIds = companyRows.Select(x => x.Id).ToList();
+
+        var accountRows = await _dbContext.DemoPeople
+            .AsNoTracking()
+            .Where(person => companyIds.Contains(person.CompanyId) && person.IsActive)
+            .OrderBy(person => person.CompanyId)
+            .ThenBy(person => person.Role)
+            .ThenBy(person => person.FullName)
+            .Select(person => new
+            {
+                person.CompanyId,
+                Account = new OwnerPersonAccessSummaryDto(
+                    person.Id,
+                    person.FullName,
+                    DemoRoleFormatter.ToDisplayLabel(person.Role),
+                    person.JobTitle,
+                    person.Department,
+                    person.LastSignedInAtUtc)
+            })
+            .ToListAsync(cancellationToken);
+
+        var accountsByCompany = accountRows
+            .GroupBy(x => x.CompanyId)
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<OwnerPersonAccessSummaryDto>)group
+                    .Select(x => x.Account)
+                    .ToList());
+
+        var companies = companyRows
+            .Select(company => new OwnerCompanySummaryDto(
+                company.Id,
+                company.Name,
+                company.Slug,
+                company.AccessCode,
+                company.IsActive,
+                company.UsageCount,
+                company.LastUsedAtUtc,
+                company.TicketCount,
+                company.PersonCount,
+                company.CreatedAtUtc,
+                company.LastResetAtUtc,
+                accountsByCompany.TryGetValue(company.Id, out var accounts)
+                    ? accounts
+                    : []))
+            .ToList();
 
         return new OwnerDashboardDto(
             companies.Count,

@@ -18,6 +18,8 @@ public sealed class DemoPerson : AuditableEntity
 
     public bool IsActive { get; set; } = true;
 
+    public DateTime? LastSignedInAtUtc { get; set; }
+
     public ICollection<Ticket> CreatedTickets { get; set; } = new List<Ticket>();
 
     public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
